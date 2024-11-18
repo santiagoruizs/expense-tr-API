@@ -65,11 +65,11 @@ async function getCategories() {
 async function getMovements(user_id) {
   try{
     const query =
-      `Select i.created_at datetime, c.name, i.amount, i.description, c.type   from income i 
+      `Select i.created_at datetime, c.name, c.category_id, i.amount, i.description, c.type, i.income_id as id   from income i 
           inner join categories c on c.category_id = i.category_id 
           where i.user_id = $1 
       union
-      Select e.created_at datetime, c.name, e.amount, e.description, c.type from expenses e 
+      Select e.created_at datetime, c.name, c.category_id, e.amount, e.description, c.type, e.expense_id as id from expenses e 
           inner join categories c on c.category_id = e.category_id 
           where e.user_id = $1
       order by datetime desc`;
@@ -134,6 +134,35 @@ async function getMonthExpensesByCategory(user_id) {
   
 }
 
+async function editExpense(expense_id, category_id, amount, description) {
+  try{
+    const query =
+      `UPDATE expenses
+        Set category_id = $2, amount = $3, description = $4
+        Where expense_id = $1`;
+    const values  = [expense_id, category_id, amount, description]
+    const res = await pool.query(query, values);
+    return res.rows;
+  }catch(err){
+    console.error('Error geting categories:', err);
+    return res.status(500).json({ msg: err.message });
+  }  
+}
+
+async function editIncome(income_id, category_id, amount, description) {
+  try{
+    const query =
+      `UPDATE income
+        Set category_id = $2, amount = $3, description = $4
+        Where income_id = $1`;
+    const values  = [income_id, category_id, amount, description]
+    const res = await pool.query(query, values);
+    return res.rows;
+  }catch(err){
+    console.error('Error geting categories:', err);
+    return res.status(500).json({ msg: err.message });
+  }  
+}
 
 
 module.exports = {
@@ -144,5 +173,7 @@ module.exports = {
   getMovements,
   getDayExpensesByCategory,
   getWeekExpensesByCategory,
-  getMonthExpensesByCategory
+  getMonthExpensesByCategory,
+  editExpense,
+  editIncome
 };
